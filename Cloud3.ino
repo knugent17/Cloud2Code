@@ -51,7 +51,7 @@ void loop() {
      const size_t capacity = JSON_ARRAY_SIZE(1) + JSON_OBJECT_SIZE(1) + JSON_OBJECT_SIZE(2) + JSON_OBJECT_SIZE(3) + JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(12) + 270;
 DynamicJsonDocument doc(capacity);
 
-const char* json = "{\"coord\":{\"lon\":-104.98,\"lat\":39.74},\"weather\":[{\"id\":800,\"main\":\"Clear\",\"description\":\"clear sky\",\"icon\":\"01d\"}],\"base\":\"stations\",\"main\":{\"temp\":292.05,\"feels_like\":288.67,\"temp_min\":290.93,\"temp_max\":293.15,\"pressure\":1022,\"humidity\":13},\"wind\":{\"speed\":0.45,\"deg\":38,\"gust\":2.68},\"clouds\":{\"all\":0},\"dt\":1588186843,\"sys\":{\"type\":3,\"id\":2004334,\"country\":\"US\",\"sunrise\":1588161726,\"sunset\":1588211522},\"timezone\":-21600,\"id\":5419384,\"name\":\"Denver\",\"cod\":200}";
+String json = payload;
 
 deserializeJson(doc, json);
 
@@ -60,8 +60,8 @@ float coord_lat = doc["coord"]["lat"]; // 39.74
 
 JsonObject weather_0 = doc["weather"][0];
 int weather_0_id = weather_0["id"]; // 800
-const char* weather_0_main = weather_0["main"]; // "Clear"
-const char* weatherMain = weather_0["description"]; // "clear sky"
+String weatherMain = weather_0["main"];
+const char* weather_0_Des = weather_0["description"]; // "clear sky"
 const char* weather_0_icon = weather_0["icon"]; // "01d"
 
 const char* base = doc["base"]; // "stations"
@@ -100,17 +100,24 @@ int cod = doc["cod"]; // 200
       Serial.print(" is ");
       Serial.println(weatherMain);
 
-      //Close connection
+
   
-  
-  if(weatherMain = "clear"){
+  if(weatherMain == "Clear"){
     for (int i =0; i < NUMPIXELS; i++){
     pixels.setPixelColor(i, pixels.Color(0,200,255));
-  }
   pixels.show();
+    }
+} 
+if(weatherMain == "Clouds"){
+    for (int i =0; i < NUMPIXELS; i++){
+    pixels.setPixelColor(i, pixels.Color(255,0,0));
+  pixels.show();
+    }
+}
+
 }
  http.end();
+ 
  delay(60000);
- }
-}
-}
+  }
+    }
