@@ -1,0 +1,139 @@
+// NeoPixel Ring simple sketch (c) 2013 Shae Erisson
+// released under the GPLv3 license to match the rest of the AdaFruit NeoPixel library
+
+#include <Adafruit_NeoPixel.h>
+#include <WiFi.h>
+#include <HTTPClient.h>
+#include <ArduinoJson.h>
+#ifdef __AVR__
+#include <avr/power.h>
+#endif
+
+// Which pin on the Arduino is connected to the LED Strip
+#define PIN            0
+// WiFi Parameters
+const char* ssid = "Hudds";
+const char* password = "Chance29*";
+
+// How many NeoPixels
+#define NUMPIXELS      30
+
+// When we setup the NeoPixel library, we tell it how many pixels, and which pin to use to send signals.
+Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
+
+// blink Rate
+int blinkRate = 4000;
+
+void setup() {
+  // begin serial communications
+  Serial.begin(115200);
+  WiFi.begin(ssid, password);
+  
+  Serial.println("Connecting...");
+  while (WiFi.status() != WL_CONNECTED) {
+    Serial.print(".");
+    delay(1000);
+  }
+  
+  // after successful connection, print:
+  Serial.print("Connected to: ");
+  Serial.println(ssid);
+  // initialize the NeoPixel Library
+  pixels.begin();
+}
+
+void loop() {
+// Check WiFi Status
+  if (WiFi.status() == WL_CONNECTED) {
+    
+    //Object of class HTTPClient
+    HTTPClient http;  
+    http.begin("http://api.openweathermap.org/data/2.5/weather?q=DENVER&APPID=2766afd92bbcd1446ef143934c241f39");
+    int httpCode = http.GET();
+    
+    //Check the returning code
+    if (httpCode > 0) {
+      // Get the request response payload
+      String json = http.getString();
+      Serial.println(json);
+      // TODO: Parsing
+      const size_t capacity = JSON_ARRAY_SIZE(2) + 2*JSON_OBJECT_SIZE(1) + 2*JSON_OBJECT_SIZE(2) + 2*JSON_OBJECT_SIZE(4) + JSON_OBJECT_SIZE(5) + JSON_OBJECT_SIZE(6) + JSON_OBJECT_SIZE(14) + 330;
+      DynamicJsonDocument doc(capacity);
+
+      //String json = http.getString();
+
+      deserializeJson(doc, json);
+
+      float coord_lon = doc["coord"]["lon"]; // -112.19
+      float coord_lat = doc["coord"]["lat"]; // 33.54
+
+      JsonObject weather_0 = doc["weather"][0];
+      int weather_0_id = weather_0["id"]; // 501
+      const char* weather_0_main = weather_0["main"]; // "Rain"
+      const char* weather_0_description = weather_0["description"]; // "moderate rain"
+      const char* weather_0_icon = weather_0["icon"]; // "10d"
+
+      JsonObject weather_1 = doc["weather"][1];
+      int weather_1_id = weather_1["id"]; // 701
+      const char* weather_1_main = weather_1["main"]; // "Mist"
+      const char* weather_1_description = weather_1["description"]; // "mist"
+      const char* weather_1_icon = weather_1["icon"]; // "50d"
+
+      const char* base = doc["base"]; // "stations"
+
+      JsonObject main = doc["main"];
+      float main_temp = main["temp"]; // 290.99
+      float main_feels_like = main["feels_like"]; // 292.48
+      float main_temp_min = main["temp_min"]; // 289.82
+      float main_temp_max = main["temp_max"]; // 292.15
+      int main_pressure = main["pressure"]; // 1018
+      int main_humidity = main["humidity"]; // 93
+
+      int visibility = doc["visibility"]; // 4828
+
+      float wind_speed = doc["wind"]["speed"]; // 1.1
+      int wind_deg = doc["wind"]["deg"]; // 141
+
+      float rain_1h = doc["rain"]["1h"]; // 1.29
+
+      int clouds_all = doc["clouds"]["all"]; // 90
+
+      long dt = doc["dt"]; // 1583960069
+
+      JsonObject sys = doc["sys"];
+      int sys_type = sys["type"]; // 1
+      int sys_id = sys["id"]; // 5795
+      const char* sys_country = sys["country"]; // "US"
+      long sys_sunrise = sys["sunrise"]; // 1583934225
+      long sys_sunset = sys["sunset"]; // 1583976818
+
+      int timezone = doc["timezone"]; // -25200
+      long id = doc["id"]; // 5295985
+      const char* name = doc["name"]; // "Glendale"
+      int cod = doc["cod"]; // 200
+      int size1 = sizeof(weather_0_main) + 1;
+      String weather;
+      for(int i = 0; i <= size1; i++){
+        weather += weather_0_main[i];
+      }
+      Serial.println(weather);
+      if(weather == "Sunny"){
+          for (int i = 0; i < NUMPIXELS; i++) {
+          // pixels.Color takes RGB values, from 0,0,0 up to 255,255,255
+          pixels.setPixelColor(i, pixels.Color(0, 50, 0));
+          }
+          pixels.show();
+      }
+      else if(weather == "Clouds"){
+        for(int i = 0; i < NUMPIXELS; i++){
+          pixels.setPixelColor(i, pixels.Color(0, 0, 100));
+        }
+        pixels.show();
+      }
+
+    http.end();   //Close connection
+  } //end of if statement
+  // Delay
+  delay(60000);
+} //end of if statement
+}
